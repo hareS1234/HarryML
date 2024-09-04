@@ -1,0 +1,46 @@
+{
+    "ESTIMATORS": {
+        "CUSTOM": {
+          "arginine_count": ["arginine_fraction", [],{}]
+        },
+        "BIOPYTHON": {
+            "molecular_weight": ["molecular_weight", [],{}],
+            "isoelectric_pint": ["isoelectric_point", [],{}],
+            "aromaticity": ["aromaticity", [],{}],
+            "net_charge": ["charge_at_pH", [7], {}],
+            "hydropathy_index": ["gravy", [],{}],
+            "length": ["length", [],{}],
+            "composition": ["get_amino_acids_percent", [],{}],
+            "flexibility": ["flexibility", [],{}],
+            "instability_index": ["instability_index", [],{}],
+            "molar_extinction_coefficient": ["molar_extinction_coefficient", [],{}],
+            "secondary_structure_fraction": ["secondary_structure_fraction", [],{}]
+        },
+        "SPARROW": {
+            "fraction_of_charged_residues": ["FCR",  [],{}],
+            "fraction_of_positive_residues": ["fraction_positive",  [],{}],
+            "fraction_of_negative_residues": ["fraction_negative",  [],{}],
+            "net_charge_per_residue": ["NCPR", [],{}],
+            "charge_segregation_kappa": ["kappa",  [],{}],
+            "sequence_charge_decoration_1": ["SCD", [],{}],
+            "sequence_charge_decoration_2": ["SHD", [],{}],
+            "fraction_aliphatic": ["fraction_aliphatic", [],{}],
+            "fraction_polar": ["fraction_polar", [],{}],
+            "fraction_proline": ["fraction_proline", [],{}],
+            "complexity": ["complexity", [],{}],
+            "hydrophobicity": ["hydrophobicity", [],{}],
+            "compute_iwd_charged_weighted_+": ["compute_iwd_charged_weighted", [], {
+                "charge": "+"}],
+            "compute_iwd_charged_weighted_-": ["compute_iwd_charged_weighted", [], {
+                "charge": "-" }],
+            "compute_bivariate_iwd_charged_weighted": ["compute_bivariate_iwd_charged_weighted", [], {}]
+        },
+        "SPARROW_PREDICTOR": {
+            "radius_of_gyration": ["radius_of_gyration", [],{}],
+            "end_to_end_distance": ["end_to_end_distance", [],{}],
+            "asphericity": ["asphericity", [],{}],
+            "scaling_exponent": ["scaling_exponent", [],{}],
+            "prefactor": ["prefactor", [],{}]
+        }
+    }
+}
