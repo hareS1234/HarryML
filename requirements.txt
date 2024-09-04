@@ -1,0 +1,8 @@
+Bio==1.7.1
+biopython==1.83
+matplotlib==3.9.2
+numpy==2.1.0
+pandas==2.2.2
+scikit_learn==1.5.1
+scipy==1.14.1
+sparrow==0.2.2+29.ge1a17af

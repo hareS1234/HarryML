@@ -3,6 +3,8 @@ import inspect
 import json
 import os
 
+import libs.da as da
+
 import sparrow
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
@@ -64,6 +66,131 @@ def load_ps_concentrations(root_dir):
                         with open(os.path.join(root_dir, gene_name, temp, file_name)) as f:
                             ps_conc[gene_name]["temp"][float(temp)] = f.readlines()
                             ps_conc[gene_name]["temp"][float(temp)] = parse_ps_concetrations_data(ps_conc[gene_name]["temp"][float(temp)])
+    return ps_conc
+
+def load_ps_concentrations_v2(root_dir):
+    def is_chuncked_file_name(file_name):
+        if file_name.endswith(".txt") and file_name.split(".")[0][-3:].isdigit():
+            return True
+        return False
+
+    def parse_ps_concetrations_data(ps_values: list) -> dict:
+        for line in ps_values:
+            if line.startswith("Dense"):
+                values = line.strip().split(":")[1].split("+/-")
+                conc_dense = float(values[0].strip())
+                var_dense = float(values[1].strip())
+            elif line.startswith("Dilute"):
+                values = line.strip().split(":")[1].split("+/-")
+                conc_dilute = float(values[0].strip())
+                var_dilute = float(values[1].strip())
+
+        return {"conc": {"dilute_conc": conc_dilute,
+                         "dense_conc": conc_dense,
+                         "var_dilute": var_dilute,
+                         "var_dense": var_dense}}
+
+    def parse_critical_temperature(ps_values: list) -> dict:
+        for line in ps_values:
+            if line.startswith("Critical Solution Temperature"):
+                ct_value = line.strip().split(":")[1].strip().split(" ")[0].strip()
+        return {"ct_value": float(ct_value)}
+
+    ps_conc = {}
+    for gene_name in os.listdir(root_dir):
+        ps_conc[gene_name] = {}
+        ps_conc[gene_name]["seq"] = _load_seq_from_file(os.path.join(root_dir, gene_name, "seq.txt"))
+        ps_conc[gene_name]["temp"] = {}
+        for file_name in os.listdir(os.path.join(root_dir, gene_name)):
+            if not file_name.startswith(".") and is_chuncked_file_name(file_name):
+                temp = file_name.split(".")[0][-3:]
+                with open(os.path.join(root_dir, gene_name, file_name)) as f:
+                    ps_conc[gene_name]["temp"][float(temp)] = f.readlines()
+                    ps_conc[gene_name]["temp"][float(temp)] = parse_ps_concetrations_data(ps_conc[gene_name]["temp"][float(temp)])
+            elif not file_name.startswith(".") and file_name == 'critical_solution_temperature.txt':
+                with open(os.path.join(root_dir, gene_name, file_name)) as f:
+                    ps_conc[gene_name]["ct"] = f.readlines()
+                    ps_conc[gene_name]["ct"] = parse_critical_temperature(ps_conc[gene_name]["ct"])
+    return ps_conc
+
+
+def load_ps_concentrations_v3(root_dir):
+    def is_chuncked_file_name(file_name):
+        if file_name.endswith(".txt") and "densities_chunked2" in file_name:
+            return True
+
+        #if file_name.endswith(".txt") and file_name.split(".")[0][-3:].isdigit():
+        #    return True
+        return False
+    def is_raw_chuncked_file_name(file_name):
+        if file_name.endswith(".txt") and file_name.split(".")[0][-3:].isdigit():
+            return True
+        return False
+
+    def parse_ps_concetrations_data(ps_values: list) -> dict:
+        for line in ps_values:
+            if line.startswith("Dense"):
+                values = line.strip().split(":")[1].split("+/-")
+                conc_dense = float(values[0].strip())
+                var_dense = float(values[1].strip())
+            elif line.startswith("Dilute"):
+                values = line.strip().split(":")[1].split("+/-")
+                conc_dilute = float(values[0].strip())
+                var_dilute = float(values[1].strip())
+
+        return {"conc": {"dilute_conc": conc_dilute,
+                         "dense_conc": conc_dense,
+                         "var_dilute": var_dilute,
+                         "var_dense": var_dense}}
+
+    def parse_critical_temperature(ps_values: list) -> dict:
+        for line in ps_values:
+            if line.startswith("Critical Solution Temperature"):
+                ct_value = line.strip().split(":")[1].strip().split(" ")[0].strip()
+                if "-" in ct_value:
+                    ct_value = ct_value.split("-")[0]
+        return {"ct_value": float(ct_value)}
+
+    ps_conc = {}
+    for gene_name in os.listdir(root_dir):
+        ps_conc[gene_name] = {}
+        ps_conc[gene_name]["seq"] = _load_seq_from_file(os.path.join(root_dir, gene_name, "seq.txt"))
+        ps_conc[gene_name]["temp"] = {}
+        # ps_conc[gene_name]["density"] = {}
+        # ps_conc[gene_name]["stddevs"] = {}
+
+        for temp in os.listdir(os.path.join(root_dir, gene_name)):
+            if temp[4:].isdigit() or temp.isdigit():
+                if temp.isdigit():
+                    temp_v = float(temp)
+                else:
+                    temp_v = float(temp[4:])
+                if float(temp_v) not in ps_conc[gene_name]["temp"]:
+                    ps_conc[gene_name]["temp"][temp_v] = {}
+                for file_name in os.listdir(os.path.join(root_dir, gene_name, temp)):
+                    if not file_name.startswith(".") and is_chuncked_file_name(file_name):
+                        #temp_v = file_name.split(".")[0][-3:]
+                        with open(os.path.join(root_dir, gene_name, temp, file_name)) as f:
+                            data_t = f.readlines()
+                            #ps_conc[gene_name]["temp"][float(temp_v)] = f.readlines()
+                            ps_conc[gene_name]["temp"][float(temp_v)]["conc"] = parse_ps_concetrations_data(data_t)[
+                                "conc"]
+
+                    elif not file_name.startswith(".") and file_name == 'densities_chunked2.dat':
+                        density, stddevs = da.get_density(os.path.join(root_dir, gene_name, temp, file_name))
+                        ps_conc[gene_name]["temp"][float(temp_v)]["density"] = list(density)
+                        ps_conc[gene_name]["temp"][float(temp_v)]["stddevs"] = list(stddevs)
+                        #ps_conc[gene_name]["temp"][float(temp_v)] = stddevs
+            elif not temp.startswith(".") and temp == 'critical_solution_temperature.txt':
+                with open(os.path.join(root_dir, gene_name, temp)) as f:
+                    ps_conc[gene_name]["ct"] = f.readlines()
+                    ps_conc[gene_name]["ct"] = parse_critical_temperature(ps_conc[gene_name]["ct"])
+            elif not temp.startswith(".") and temp == 'ps_densities':
+                for file_to_check in os.listdir(os.path.join(root_dir, gene_name, temp)):
+                    if file_to_check == 'critical_solution_temperature.txt':
+                        with open(os.path.join(root_dir, gene_name, temp, file_to_check)) as f:
+                            ps_conc[gene_name]["ct"] = f.readlines()
+                            ps_conc[gene_name]["ct"] = parse_critical_temperature(ps_conc[gene_name]["ct"])
     return ps_conc
 
 

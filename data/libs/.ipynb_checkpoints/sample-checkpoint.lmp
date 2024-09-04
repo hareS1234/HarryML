@@ -1,0 +1,75 @@
+variable temperature equal 210
+variable randomSeed equal 12345
+
+# Initialise parameters for units and box type
+units       real
+dimension   3
+boundary    p p p
+atom_style  full
+
+# Initital pair style and bond parameters
+bond_style  harmonic
+
+dielectric  80.0
+
+# Create new simulation box or load existing box
+read_data       initialSlab.dat
+
+# Set pair parameters
+include         potentials.dat
+
+reset_atom_ids
+velocity        all create ${temperature} ${randomSeed}
+
+special_bonds fene
+
+# neighbour list settings
+neighbor  3.5 multi
+
+# Timestep and computational parameters
+comm_style      tiled
+timestep        10
+
+# Relax sim by performing minimisation (this is helpful if we change the potential or sequence)
+min_style       fire
+timestep        0.0000001
+minimize 0.0 1.0e-8 10000 100000000
+timestep        0.00001
+minimize 0.0 1.0e-8 10000 100000000
+timestep        0.1
+minimize 0.0 1.0e-8 10000 100000
+timestep        10
+minimize 0.0 1.0e-8 10000 100000
+
+neigh_modify    every 10 delay 0
+
+fix             fxnve   all nve
+fix             fxlange all langevin ${temperature} ${temperature} 100000.0 ${randomSeed}
+fix             fxbal  all balance 1000 1.1 rcb
+
+# Thermo output settings
+thermo          1000
+thermo_style    custom step pe ecoul ke temp press density
+thermo_modify   flush yes
+
+dump            1 all custom 5000 equilibration.lammpstrj id mol type q x y z
+
+# Equilibration
+run             500000
+
+#Can chose to change the ensemble via:
+#unfixfix             nve
+#fix                  #NewEnsemble (eg. nvt)
+
+compute         myChunk2 all chunk/atom bin/1d z lower 0.02 units reduced
+fix             densityRegions2 all ave/chunk 1000 80 100000 myChunk2 density/mass file densities_chunked2.dat
+
+fix fixCOM all recenter INIT INIT INIT  # this helps to prevent drift of the interfaces and makes it easier to average over many measurements
+
+dump            2 all custom 5000 result.lammpstrj id mol type q x y z #wrapped coordinates
+
+# Run simulation
+run             20000000 #200 ns data-gathering run
+
+# write final configuration
+write_data      final-structure.dat nocoeff
