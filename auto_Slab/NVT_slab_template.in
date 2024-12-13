@@ -1,0 +1,53 @@
+
+
+units       real
+dimension   3
+boundary    p p p
+atom_style  full
+
+
+bond_style  harmonic
+dielectric  80.0
+
+read_data  slab_config_${IDP}.dat
+
+include potential.param
+
+
+neighbor  3.5 multi
+neigh_modify  every 10 delay 0
+comm_style    tiled
+
+timestep      10
+# timer timeout 03:00:00
+velocity   all create ${myTemp} 494211
+
+# Group atoms based on IDs
+group group1 id 1:${numAtom}
+
+
+# Compute density profiles for group1
+compute chunk_group1 group1 chunk/atom bin/1d x lower 0.01 units reduced
+fix densityRegions1 group1 ave/chunk 100 10 1000 chunk_group1 density/mass file density_${IDP}_${myTemp}.dat
+
+fix fixCOM all recenter INIT INIT INIT  # this helps to prevent drift of the interfaces and makes it easier to average over many measurements
+
+fix             fxnve   all nve
+fix             fxlange all langevin ${myTemp} ${myTemp} 100000.0 34588
+fix             fxbal  all balance 1000 1.05 rcb
+
+
+dump          1 all custom 10000 ${IDP}_${myTemp}_slab.lammpstrj id mol type q xu yu zu 
+dump_modify   1 sort id
+
+
+
+thermo        1000
+thermo_style  custom step pe
+thermo_modify flush yes
+
+
+restart      5000000 restart
+
+run 100000000
+  

@@ -1,0 +1,45 @@
+
+
+log ${protein}_${myTemp}.log
+
+units       real
+dimension   3
+boundary    p p p
+atom_style  full
+
+
+bond_style  harmonic
+dielectric  80.0
+
+read_restart  compressed.${compressedStep}
+
+include potential.param
+
+
+neighbor  3.5 multi
+neigh_modify  every 10 delay 0
+comm_style    tiled
+
+timestep      10
+# timer timeout 03:00:00
+
+fix             fxnve   all nve
+fix             fxbal  all balance 1000 1.05 rcb
+fix             fxlange all langevin ${myTemp} ${myTemp} 100000.0 34588
+fix             fxbaro  all press/berendsen iso 0 0 100000.0
+
+dump          1 all custom 1000 relaxed_${protein}_${myTemp}.lammpstrj id mol type xu yu zu 
+dump_modify   1 sort id
+
+
+thermo        100
+thermo_style  custom step press pe lz density
+thermo_modify flush yes
+
+
+
+
+#relax
+
+run ${relaxStep}
+  
