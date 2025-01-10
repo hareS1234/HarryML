@@ -1,3 +1,8 @@
 # IDE Fragments
 .idea/
 __pycache__
+.DS_Store
+data/FINISHED_SIMULATIONS/
+.ipynb_checkpoints/
+venv/
+experiments/
