@@ -6,3 +6,7 @@ data/FINISHED_SIMULATIONS/
 .ipynb_checkpoints/
 venv/
 experiments/
+data/new_data/
+data/sequences/
+data/new_data_preprocessed/
+data/new_data_processed/
